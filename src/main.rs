@@ -45,7 +45,8 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 480.0])
-            .with_title("Black Curtain"),
+            .with_title("Black Curtain")
+            .with_app_id("barafu-black-curtain"),
         ..Default::default()
     };
 
