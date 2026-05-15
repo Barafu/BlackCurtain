@@ -101,24 +101,47 @@ impl BlackCurtain {
 }
 
 impl eframe::App for BlackCurtain {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Paint the entire panel background with the chosen color
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let color = self.color;
-        ctx.style_mut(move |style| {
+        ui.ctx().global_style_mut(move |style| {
             style.visuals.panel_fill = color;
             style.visuals.window_fill = color;
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // Allocate the full panel area and capture clicks
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             let response = ui.allocate_rect(ui.max_rect(), egui::Sense::click());
-            if response.double_clicked() {
-                // Toggle fullscreen on double-click
+
+        
+            // Doesn't work because of https://github.com/emilk/egui/issues/7959
+            // let left_down = ui.ctx().input(|i| i.pointer.button_down(egui::PointerButton::Primary));
+            // if left_down {
+            //     if !self.dragging {
+            //         self.dragging = true;
+            //         ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+            //         println!("Drag start");
+            //     }
+            //     else {
+            //         self.dragging = false;
+            //     }
+            // }
+            // if left_down {
+            //     println!("Left down");
+            // }
+            // if any_up {
+            //     println!("Drag stop");
+            //     self.dragging = false;
+            // }
+
+            if response.double_clicked()
+                || ui.input(|i| i.key_pressed(egui::Key::Space))
+            {
                 self.fullscreen = !self.fullscreen;
-                ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
-            } else if response.clicked_by(egui::PointerButton::Secondary) {
-                // Minimize on right-click
-                ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
+            }
+            if response.clicked_by(egui::PointerButton::Secondary)
+                || ui.input(|i| i.key_pressed(egui::Key::Enter))
+            {
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             }
         });
     }

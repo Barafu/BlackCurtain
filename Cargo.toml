@@ -8,14 +8,14 @@ license = "MIT"
 description = "A GUI app to dim a specific monitor"
 
 [dependencies]
-eframe = "0.31"
+eframe = "0.34"
 anyhow = "1.0"
 
 [profile.release]
-strip = true #Remove extra symbols
-opt-level = "s" #Optimize for size
-lto = true #Enable linker optimizations
-codegen-units=1 #Maximise optimizations
+#strip = true #Remove extra symbols
+#opt-level = "s" #Optimize for size
+#lto = true #Enable linker optimizations
+#codegen-units=1 #Maximise optimizations
 
 [profile.dev]
 panic = "unwind"  # This ensures backtraces work
