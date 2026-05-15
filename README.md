@@ -1,5 +1,7 @@
 # black-curtain
 
+I have two monitors. Sometimes I want to turn one of them off when it distracts me. But turning the monitor off causes OS to rearrange windows and sometimes even fail at that. Changing brightness programmatically also does not work reliably. So I made this. 
+
 A GUI app that fills a monitor with a solid color — useful to quickly black out a specific screen. Supports custom colors, control through both mouse and keyboard.
 
 ## Installation
