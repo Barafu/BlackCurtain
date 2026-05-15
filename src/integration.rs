@@ -7,8 +7,10 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-/// 512×512 PNG icon, embedded at compile time.
-pub const ICON_BYTES: &[u8] = include_bytes!("../data/icon.png");
+/// 256×256 PNG icon, embedded at compile time.
+pub const ICON_256_BYTES: &[u8] = include_bytes!("../data/icon256.png");
+/// 48×48 PNG icon, embedded at compile time.
+pub const ICON_48_BYTES: &[u8] = include_bytes!("../data/icon48.png");
 /// XDG desktop entry template with an `{EXEC}` placeholder for the binary path.
 const DESKTOP_TEMPLATE: &str = include_str!("../data/barafu-black-curtain.desktop.template");
 
@@ -82,21 +84,27 @@ pub fn install() -> Result<()> {
         ));
     }
 
-    // Install the icon resource
-    let icon_temp = create_temp_file(ICON_BYTES, "barafu-black-curtain.png")?;
+    // Install the icon resources
+    for (icon_bytes, size) in [
+        (ICON_256_BYTES, "256"),
+        (ICON_48_BYTES, "48"),
+    ] {
+        let icon_temp = create_temp_file(icon_bytes, &format!("barafu-black-curtain-{}.png", size))?;
 
-    let status = Command::new("xdg-icon-resource")
-        .args(["install", "--size", "256", "--context", "apps"])
-        .arg(&icon_temp)
-        .arg("barafu-black-curtain")
-        .status()
-        .context("Failed to execute xdg-icon-resource")?;
+        let status = Command::new("xdg-icon-resource")
+            .args(["install", "--size", size, "--context", "apps"])
+            .arg(&icon_temp)
+            .arg("barafu-black-curtain")
+            .status()
+            .with_context(|| format!("Failed to execute xdg-icon-resource install --size {}", size))?;
 
-    if !status.success() {
-        return Err(anyhow!(
-            "xdg-icon-resource failed with exit code {:?}",
-            status.code()
-        ));
+        if !status.success() {
+            return Err(anyhow!(
+                "xdg-icon-resource install --size {} failed with exit code {:?}",
+                size,
+                status.code()
+            ));
+        }
     }
 
     eprintln!("Installation completed successfully");
@@ -125,17 +133,20 @@ pub fn uninstall() -> Result<()> {
         ));
     }
 
-    let status = Command::new("xdg-icon-resource")
-        .args(["uninstall", "--size", "512", "--context", "apps"])
-        .arg("barafu-black-curtain")
-        .status()
-        .context("Failed to execute xdg-icon-resource uninstall")?;
+    for size in ["256", "48"] {
+        let status = Command::new("xdg-icon-resource")
+            .args(["uninstall", "--size", size, "--context", "apps"])
+            .arg("barafu-black-curtain")
+            .status()
+            .with_context(|| format!("Failed to execute xdg-icon-resource uninstall --size {}", size))?;
 
-    if !status.success() {
-        return Err(anyhow!(
-            "xdg-icon-resource uninstall failed with exit code {:?}",
-            status.code()
-        ));
+        if !status.success() {
+            return Err(anyhow!(
+                "xdg-icon-resource uninstall --size {} failed with exit code {:?}",
+                size,
+                status.code()
+            ));
+        }
     }
 
     eprintln!("Uninstallation completed successfully");
