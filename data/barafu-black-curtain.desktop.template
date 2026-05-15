@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Black Curtain
+Comment=Fill a monitor with a solid color
+Exec={EXEC}
+Icon=barafu-black-curtain
+Categories=Utility;
+Terminal=false
+StartupNotify=false
+StartupWMClass=black_curtain
+SingleMainWindow=true
