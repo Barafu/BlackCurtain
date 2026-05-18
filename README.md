@@ -4,6 +4,13 @@ I have two monitors. Sometimes I want to turn one of them off when it distracts 
 
 A GUI app that fills a monitor with a solid color — useful to quickly black out a specific screen. Supports custom colors, control through both mouse and keyboard.
 
+## Controls
+
+| Action              | Mouse                 | Keyboard |
+| ------------------- | --------------------- | -------- |
+| Toggle fullscreen   | Double-click          | Space    |
+| Minimize window     | Right-click           | Enter    |
+
 ## Installation
 
 ### Manual (recommended)
@@ -35,13 +42,6 @@ black-curtain --uninstall
 `COLOR` is an optional hex color (e.g. `#000000`, `#ff0000`, `#333`). If
 omitted, the curtain defaults to black.
 
-### Controls
-
-| Action              | Mouse                 | Keyboard |
-| ------------------- | --------------------- | -------- |
-| Toggle fullscreen   | Double-click          | Space    |
-| Minimize window     | Right-click           | Enter    |
-
 ### Examples
 
 ```sh
@@ -58,3 +58,4 @@ black-curtain '#222'
 ## License
 
 MIT
+The application was made using DeepSeek LLM
