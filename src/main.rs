@@ -3,37 +3,11 @@
 //! double-click, and minimized on right-click.
 //!
 //! CLI arguments:
-//! - `--install`   — register in the Linux XDG application menu
-//! - `--uninstall` — remove from the XDG application menu
 //! - `<hex_color>` — start with the given color (e.g. `#ff0000`)
 
 use eframe::egui::{self, Color32};
 
-mod integration;
-
 fn main() -> eframe::Result {
-    // Handle --install / --uninstall before anything else
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 {
-        match args[1].as_str() {
-            "--install" => {
-                if let Err(e) = integration::install() {
-                    eprintln!("error: {e}");
-                    std::process::exit(1);
-                }
-                return Ok(()); 
-            }
-            "--uninstall" => {
-                if let Err(e) = integration::uninstall() {
-                    eprintln!("error: {e}");
-                    std::process::exit(1);
-                }
-                return Ok(());
-            }
-            _ => {}
-        }
-    }
-
     // Parse optional hex color from first positional argument
     let color = std::env::args()
         .nth(1)
@@ -46,7 +20,7 @@ fn main() -> eframe::Result {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 480.0])
             .with_title("Black Curtain")
-            .with_app_id("barafu-black-curtain"),
+            .with_app_id("black_curtain"),
         ..Default::default()
     };
 
