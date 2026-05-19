@@ -5,6 +5,8 @@
 //! CLI arguments:
 //! - `<hex_color>` — start with the given color (e.g. `#ff0000`)
 
+use std::time::Duration;
+
 use eframe::egui::{self, Color32};
 
 fn main() -> eframe::Result {
@@ -82,6 +84,15 @@ impl eframe::App for BlackCurtain {
             style.visuals.panel_fill = color;
             style.visuals.window_fill = color;
         });
+
+        let cursor_icon = if ui.ctx().input(|i| i.pointer.is_moving()) {
+            ui.ctx().request_repaint_after(Duration::from_secs_f32(0.5));
+            egui::CursorIcon::Default
+            
+        } else {
+            egui::CursorIcon::None
+        };
+        ui.ctx().set_cursor_icon(cursor_icon);
 
         egui::CentralPanel::default().show_inside(ui, |ui| {
             let response = ui.allocate_rect(ui.max_rect(), egui::Sense::click());
