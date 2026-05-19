@@ -11,6 +11,12 @@ A GUI app that fills a monitor with a solid color — useful to quickly black ou
 | Toggle fullscreen   | Double-click          | Space    |
 | Minimize window     | Right-click           | Enter    |
 
+## Installation
+
+On Linux, download the AppImage. Most likely your distro has an established way to install AppImages, like GearLevel or AppImageD. If you install it, you can customise the color by editing the menu entry. Or just doubleclick it. 
+
+Windows version is like winter: it is coming. 
+
 ## Usage
 
 ```
