@@ -1,4 +1,4 @@
-# black-curtain
+# Black Curtain
 
 I have two monitors. Sometimes I want to turn one of them off when it distracts me. But turning the monitor off causes OS to rearrange windows and sometimes even fail at that. Changing brightness programmatically also does not work reliably. So I made this. 
 
