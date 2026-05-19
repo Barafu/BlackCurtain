@@ -41,7 +41,7 @@ ln -s "usr/share/applications/barafu-black-curtain.desktop" "$APPDIR/barafu-blac
 # Create AppRun
 cat > "$APPDIR/AppRun" << 'EOF'
 #!/bin/bash
-exec $APPDIR/usr/bin/barafu-black-curtain
+exec $APPDIR/usr/bin/barafu-black-curtain $@
 EOF
 chmod +x "$APPDIR/AppRun"
 
