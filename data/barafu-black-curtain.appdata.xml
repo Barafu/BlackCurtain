@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>barafu-black-curtain</id>
+
+  <name>Black Curtain</name>
+  <summary>Fill a monitor with a solid color</summary>
+
+  <metadata_license>CC0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <description>
+    <p>
+      A simple utility to dim or black out a specific monitor.
+      Turning a monitor off causes the OS to rearrange windows and change
+      brightness programmatically is unreliable — Black Curtain solves this by
+      displaying a solid color overlay in fullscreen instead.
+    </p>
+    <p>
+      Supports custom hex colors, fullscreen toggle via double‑click or
+      Space key, and minimization via right‑click or Enter.
+    </p>
+  </description>
+
+  <url type="homepage">https://github.com/Barafu/black-curtain</url>
+  <url type="bugtracker">https://github.com/Barafu/black-curtain/issues</url>
+
+  <launchable type="desktop-id">barafu-black-curtain.desktop</launchable>
+
+  <categories>
+    <category>Utility</category>
+  </categories>
+
+  <content_rating type="oars-1.0">
+  </content_rating>
+
+  <releases>
+    <release version="1.0.0" date="2026-05-19">
+      <description>
+        <p>Initial release.</p>
+      </description>
+    </release>
+  </releases>
+
+  <developer id="barafu.albino">
+    <name>Barafu Albino</name>
+  </developer>
+</component>

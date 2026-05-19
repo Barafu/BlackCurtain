@@ -38,6 +38,10 @@ ln -s "usr/share/icons/hicolor/256x256/apps/barafu-black-curtain.png" "$APPDIR/b
 # Symlink .desktop to AppDir root
 ln -s "usr/share/applications/barafu-black-curtain.desktop" "$APPDIR/barafu-black-curtain.desktop"
 
+# Copy AppStream metainfo
+mkdir -p "$APPDIR/usr/share/metainfo"
+cp "$SCRIPT_DIR/data/barafu-black-curtain.appdata.xml" "$APPDIR/usr/share/metainfo/"
+
 # Create AppRun
 cat > "$APPDIR/AppRun" << 'EOF'
 #!/bin/bash
