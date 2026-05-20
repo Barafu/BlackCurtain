@@ -17,28 +17,6 @@ On Linux, download the AppImage. Most likely your distro has an established way 
 
 Windows version is like winter: it is coming. 
 
-## Usage
-
-```
-black-curtain [COLOR]
-```
-
-`COLOR` is an optional hex color (e.g. `#000000`, `#ff0000`, `#333`). If
-omitted, the curtain defaults to black.
-
-### Examples
-
-```sh
-# Full blackout
-black-curtain
-
-# Red dimmer
-black-curtain '#ff0000'
-
-# Dark gray (3-digit shorthand)
-black-curtain '#222'
-```
-
 ## License
 
 MIT

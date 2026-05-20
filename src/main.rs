@@ -1,23 +1,10 @@
-//! Fills a monitor with a solid color. Acts as a "curtain" that blacks out or
-//! dims a screen. Supports optional hex color argument, fullscreen toggle on
-//! double-click, and minimized on right-click.
-//!
-//! CLI arguments:
-//! - `<hex_color>` — start with the given color (e.g. `#ff0000`)
-
 use std::time::Duration;
 
 use eframe::egui::{self, Color32};
 
 fn main() -> eframe::Result {
-    // Parse optional hex color from first positional argument
-    let color = std::env::args()
-        .nth(1)
-        .as_deref()
-        .map(parse_hex_color)
-        .unwrap_or(Color32::BLACK);
+    let color = Color32::BLACK;
 
-    // Configure a minimal window with no chrome overrides
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 480.0])
@@ -33,14 +20,11 @@ fn main() -> eframe::Result {
     )
 }
 
-/// Parses an HTML-style hex color string (e.g. `#ff0000` or `#f00`) into a
-/// [`Color32`]. Falls back to black on invalid input.
-fn parse_hex_color(hex: &str) -> Color32 {
+fn parse_hex_color(hex: &str) -> Result<Color32, String> {
     let hex = hex.trim_start_matches('#');
-    if hex.is_empty() {
-        return Color32::BLACK;
+    if hex.len() != 3 && hex.len() != 6 {
+        return Err("expected 3 or 6 hex digits".into());
     }
-    // Expand 3-digit shorthand (e.g. #f00 → #ff0000)
     let hex = if hex.len() == 3 {
         format!(
             "{}{}{}{}{}{}",
@@ -51,28 +35,37 @@ fn parse_hex_color(hex: &str) -> Color32 {
     } else {
         hex.to_string()
     };
-    let Ok(val) = u32::from_str_radix(&hex, 16) else {
-        eprintln!("warning: invalid hex color '{}', falling back to black", hex);
-        return Color32::BLACK;
-    };
-    Color32::from_rgb(
+    let val = u32::from_str_radix(&hex, 16).map_err(|_| format!("invalid hex '{}'", hex))?;
+    Ok(Color32::from_rgb(
         ((val >> 16) & 0xFF) as u8,
         ((val >> 8) & 0xFF) as u8,
         (val & 0xFF) as u8,
-    )
+    ))
 }
 
 /// Application state.
 struct BlackCurtain {
     fullscreen: bool,
+    show_help: bool,
     color: Color32,
+    hex_input: String,
+    hex_valid: bool,
+    color_rgb: [f32; 3],
 }
 
 impl BlackCurtain {
     fn new(color: Color32) -> Self {
         Self {
             fullscreen: false,
+            show_help: false,
             color,
+            hex_input: String::new(),
+            hex_valid: false,
+            color_rgb: [
+                color.r() as f32 / 255.0,
+                color.g() as f32 / 255.0,
+                color.b() as f32 / 255.0,
+            ],
         }
     }
 }
@@ -85,10 +78,9 @@ impl eframe::App for BlackCurtain {
             style.visuals.window_fill = color;
         });
 
-        let cursor_icon = if ui.ctx().input(|i| i.pointer.is_moving()) {
+        let cursor_icon = if self.show_help || ui.ctx().input(|i| i.pointer.is_moving()) {
             ui.ctx().request_repaint_after(Duration::from_secs_f32(0.5));
             egui::CursorIcon::Default
-            
         } else {
             egui::CursorIcon::None
         };
@@ -129,6 +121,73 @@ impl eframe::App for BlackCurtain {
             {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             }
+            if response.clicked_by(egui::PointerButton::Middle)
+                || ui.input(|i| i.key_pressed(egui::Key::F1))
+            {
+                self.show_help = !self.show_help;
+            }
         });
+
+        if self.show_help {
+            egui::Window::new("Help")
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .collapsible(false)
+                .resizable(false)
+                .show(ui.ctx(), |ui| {
+                    egui::Grid::new("help_grid")
+                        .striped(true)
+                        .min_col_width(120.0)
+                        .show(ui, |ui| {
+                            ui.strong("Action");
+                            ui.strong("Mouse");
+                            ui.strong("Keyboard");
+                            ui.end_row();
+
+                            ui.label("Toggle fullscreen");
+                            ui.label("Double-click");
+                            ui.label("Space");
+                            ui.end_row();
+
+                            ui.label("Minimize window");
+                            ui.label("Right-click");
+                            ui.label("Enter");
+                            ui.end_row();
+
+                            ui.label("Show help");
+                            ui.label("Middle-click");
+                            ui.label("F1");
+                            ui.end_row();
+                        });
+                    self.hex_valid = parse_hex_color(&self.hex_input).is_ok();
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        ui.label("Color:");
+                        ui.add(egui::TextEdit::singleline(&mut self.hex_input).char_limit(7));
+                        if ui.add_enabled(self.hex_valid, egui::Button::new("Apply")).clicked() {
+                            if let Ok(c) = parse_hex_color(&self.hex_input) {
+                                self.color = c;
+                                self.color_rgb = [
+                                    c.r() as f32 / 255.0,
+                                    c.g() as f32 / 255.0,
+                                    c.b() as f32 / 255.0,
+                                ];
+                            }
+                        }
+                        if ui.color_edit_button_rgb(&mut self.color_rgb).changed() {
+                            let r = (self.color_rgb[0] * 255.0) as u8;
+                            let g = (self.color_rgb[1] * 255.0) as u8;
+                            let b = (self.color_rgb[2] * 255.0) as u8;
+                            self.color = Color32::from_rgb(r, g, b);
+                            self.hex_input = format!("#{r:02x}{g:02x}{b:02x}");
+                        }
+                    });
+                    ui.allocate_space(egui::vec2(0.0, 8.0));
+                    ui.vertical_centered(|ui| {
+                        if ui.add_sized(egui::vec2(120.0, 32.0), egui::Button::new("Close")).clicked() {
+                            self.show_help = false;
+                        }
+                    });
+                });
+        }
     }
 }
