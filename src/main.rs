@@ -50,7 +50,6 @@ struct BlackCurtain {
     color: Color32,
     hex_input: String,
     hex_valid: bool,
-    color_rgb: [f32; 3],
 }
 
 impl BlackCurtain {
@@ -61,12 +60,76 @@ impl BlackCurtain {
             color,
             hex_input: String::new(),
             hex_valid: false,
-            color_rgb: [
-                color.r() as f32 / 255.0,
-                color.g() as f32 / 255.0,
-                color.b() as f32 / 255.0,
-            ],
         }
+    }
+
+    // Help window: controls table, color picker, and close button
+    fn show_help_window(&mut self, ctx: &egui::Context) {
+        egui::Window::new("Help")
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .collapsible(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                // --- Controls table ---
+                egui::Grid::new("help_grid")
+                    .striped(true)
+                    .min_col_width(120.0)
+                    .show(ui, |ui| {
+                        ui.strong("Action");
+                        ui.strong("Mouse");
+                        ui.strong("Keyboard");
+                        ui.end_row();
+
+                        ui.label("Toggle fullscreen");
+                        ui.label("Double-click");
+                        ui.label("Space");
+                        ui.end_row();
+
+                        ui.label("Minimize window");
+                        ui.label("Right-click");
+                        ui.label("Enter");
+                        ui.end_row();
+
+                        ui.label("Show help");
+                        ui.label("Middle-click");
+                        ui.label("F1");
+                        ui.end_row();
+                    });
+
+                // --- Color input row ---
+                self.hex_valid = parse_hex_color(&self.hex_input).is_ok();
+                ui.separator();
+                ui.horizontal(|ui| {
+                    ui.label("Color:");
+                    ui.add(egui::TextEdit::singleline(&mut self.hex_input).char_limit(7));
+                    if ui.add_enabled(self.hex_valid, egui::Button::new("Apply")).clicked() {
+                        if let Ok(c) = parse_hex_color(&self.hex_input) {
+                            self.color = c;
+                        }
+                    }
+                    ui.label("or pick:");
+                    let mut rgb = [
+                        self.color.r() as f32 / 255.0,
+                        self.color.g() as f32 / 255.0,
+                        self.color.b() as f32 / 255.0,
+                    ];
+                    if ui.color_edit_button_rgb(&mut rgb).changed() {
+                        let r = (rgb[0] * 255.0) as u8;
+                        let g = (rgb[1] * 255.0) as u8;
+                        let b = (rgb[2] * 255.0) as u8;
+                        self.color = Color32::from_rgb(r, g, b);
+                        self.hex_input = format!("#{r:02x}{g:02x}{b:02x}");
+                    }
+                });
+
+                // --- Close button ---
+                ui.allocate_space(egui::vec2(0.0, 8.0));
+                ui.vertical_centered(|ui| {
+                    if ui.add_sized(egui::vec2(120.0, 32.0), egui::Button::new("Close")).clicked() {
+                        self.show_help = false;
+                    }
+                });
+            });
     }
 }
 
@@ -125,69 +188,17 @@ impl eframe::App for BlackCurtain {
                 || ui.input(|i| i.key_pressed(egui::Key::F1))
             {
                 self.show_help = !self.show_help;
+                if self.show_help {
+                    let r = self.color.r();
+                    let g = self.color.g();
+                    let b = self.color.b();
+                    self.hex_input = format!("#{r:02x}{g:02x}{b:02x}");
+                }
             }
         });
 
         if self.show_help {
-            egui::Window::new("Help")
-                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                .collapsible(false)
-                .resizable(false)
-                .show(ui.ctx(), |ui| {
-                    egui::Grid::new("help_grid")
-                        .striped(true)
-                        .min_col_width(120.0)
-                        .show(ui, |ui| {
-                            ui.strong("Action");
-                            ui.strong("Mouse");
-                            ui.strong("Keyboard");
-                            ui.end_row();
-
-                            ui.label("Toggle fullscreen");
-                            ui.label("Double-click");
-                            ui.label("Space");
-                            ui.end_row();
-
-                            ui.label("Minimize window");
-                            ui.label("Right-click");
-                            ui.label("Enter");
-                            ui.end_row();
-
-                            ui.label("Show help");
-                            ui.label("Middle-click");
-                            ui.label("F1");
-                            ui.end_row();
-                        });
-                    self.hex_valid = parse_hex_color(&self.hex_input).is_ok();
-                    ui.separator();
-                    ui.horizontal(|ui| {
-                        ui.label("Color:");
-                        ui.add(egui::TextEdit::singleline(&mut self.hex_input).char_limit(7));
-                        if ui.add_enabled(self.hex_valid, egui::Button::new("Apply")).clicked() {
-                            if let Ok(c) = parse_hex_color(&self.hex_input) {
-                                self.color = c;
-                                self.color_rgb = [
-                                    c.r() as f32 / 255.0,
-                                    c.g() as f32 / 255.0,
-                                    c.b() as f32 / 255.0,
-                                ];
-                            }
-                        }
-                        if ui.color_edit_button_rgb(&mut self.color_rgb).changed() {
-                            let r = (self.color_rgb[0] * 255.0) as u8;
-                            let g = (self.color_rgb[1] * 255.0) as u8;
-                            let b = (self.color_rgb[2] * 255.0) as u8;
-                            self.color = Color32::from_rgb(r, g, b);
-                            self.hex_input = format!("#{r:02x}{g:02x}{b:02x}");
-                        }
-                    });
-                    ui.allocate_space(egui::vec2(0.0, 8.0));
-                    ui.vertical_centered(|ui| {
-                        if ui.add_sized(egui::vec2(120.0, 32.0), egui::Button::new("Close")).clicked() {
-                            self.show_help = false;
-                        }
-                    });
-                });
+            self.show_help_window(ui.ctx());
         }
     }
 }
