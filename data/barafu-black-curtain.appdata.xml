@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>barafu-black-curtain</id>
+  <id>dev.barafu.black-curtain</id>
 
   <name>Black Curtain</name>
   <summary>Fill a monitor with a solid color</summary>
@@ -24,7 +24,7 @@
   <url type="homepage">https://github.com/Barafu/black-curtain</url>
   <url type="bugtracker">https://github.com/Barafu/black-curtain/issues</url>
 
-  <launchable type="desktop-id">barafu-black-curtain.desktop</launchable>
+  <launchable type="desktop-id">dev.barafu.black-curtain.desktop</launchable>
 
   <categories>
     <category>Utility</category>
