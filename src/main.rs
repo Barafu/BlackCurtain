@@ -137,7 +137,6 @@ impl eframe::App for BlackCurtain {
         let color = self.color;
         ui.ctx().global_style_mut(move |style| {
             style.visuals.panel_fill = color;
-            style.visuals.window_fill = color;
         });
 
         let cursor_icon = if self.show_help || ui.ctx().input(|i| i.pointer.is_moving()) {
