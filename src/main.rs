@@ -114,17 +114,10 @@ impl BlackCurtain {
                         }
                     }
                     ui.label("or pick:");
-                    let mut rgb = [
-                        self.color.r() as f32 / 255.0,
-                        self.color.g() as f32 / 255.0,
-                        self.color.b() as f32 / 255.0,
-                    ];
-                    if ui.color_edit_button_rgb(&mut rgb).changed() {
-                        let r = (rgb[0] * 255.0) as u8;
-                        let g = (rgb[1] * 255.0) as u8;
-                        let b = (rgb[2] * 255.0) as u8;
-                        self.color = Color32::from_rgb(r, g, b);
-                        self.hex_input = format!("#{r:02x}{g:02x}{b:02x}");
+                    let mut srgb = [self.color.r(), self.color.g(), self.color.b()];
+                    if ui.color_edit_button_srgb(&mut srgb).changed() {
+                        self.color = Color32::from_rgb(srgb[0], srgb[1], srgb[2]);
+                        self.hex_input = format!("#{:02x}{:02x}{:02x}", srgb[0], srgb[1], srgb[2]);
                     }
                 });
 
