@@ -15,6 +15,24 @@ fn config_dir() -> &'static std::path::PathBuf {
     })
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SessionType {
+    Wayland,
+    X11,
+    Unknown,
+}
+
+fn detect_session_type() -> SessionType {
+    match std::env::var("XDG_SESSION_TYPE")
+        .ok()
+        .as_deref()
+    {
+        Some("wayland") => SessionType::Wayland,
+        Some("x11") => SessionType::X11,
+        _ => SessionType::Unknown,
+    }
+}
+
 fn main() -> eframe::Result {
     let color = load_color();
 
@@ -87,6 +105,7 @@ fn save_color(color: Color32) {
 /// Application state.
 struct BlackCurtain {
     fullscreen: bool,
+    always_on_top: bool,
     show_help: bool,
     color: Color32,
     hex_input: String,
@@ -97,6 +116,7 @@ impl BlackCurtain {
     fn new(color: Color32) -> Self {
         Self {
             fullscreen: false,
+            always_on_top: false,
             show_help: false,
             color,
             hex_input: String::new(),
@@ -135,6 +155,13 @@ impl BlackCurtain {
                         ui.label("Middle-click");
                         ui.label("F1");
                         ui.end_row();
+
+                        if detect_session_type() != SessionType::Wayland {
+                            ui.label("Always on top");
+                            ui.label("—");
+                            ui.label("L");
+                            ui.end_row();
+                        }
                     });
 
                 // --- Color input row ---
@@ -223,6 +250,21 @@ impl eframe::App for BlackCurtain {
                 || (ui.input(|i| i.key_pressed(egui::Key::Enter)) && !self.show_help)
             {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+            }
+            if detect_session_type() != SessionType::Wayland && ui.input(|i| i.key_pressed(egui::Key::L)) {
+                self.always_on_top = !self.always_on_top;
+                let level = if self.always_on_top {
+                    egui::viewport::WindowLevel::AlwaysOnTop
+                } else {
+                    egui::viewport::WindowLevel::Normal
+                };
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::WindowLevel(level));
+                let title = if self.always_on_top {
+                    "Black Curtain (Always on Top)"
+                } else {
+                    "Black Curtain"
+                };
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Title(title.into()));
             }
             if response.clicked_by(egui::PointerButton::Middle)
                 || ui.input(|i| i.key_pressed(egui::Key::F1))

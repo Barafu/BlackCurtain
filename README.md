@@ -6,10 +6,14 @@ A GUI app that fills a monitor with a solid color — useful to quickly black ou
 
 ## Controls
 
-| Action              | Mouse                 | Keyboard |
-| ------------------- | --------------------- | -------- |
-| Toggle fullscreen   | Double-click          | Space    |
-| Minimize window     | Right-click           | Enter    |
+| Action              | Mouse         | Keyboard |
+| ------------------- | ------------- | -------- |
+| Toggle fullscreen   | Double-click  | Space    |
+| Minimize window     | Right-click   | Enter    |
+| Show help           | Middle-click  | F1       |
+| Always on top*      | —             | L        |
+
+\* Not available on Wayland.
 
 ## Installation
 
