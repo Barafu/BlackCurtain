@@ -16,7 +16,7 @@ mkdir -p "$APPDIR"
 
 # Copy binary
 mkdir -p "$APPDIR/usr/bin"
-cp "$SCRIPT_DIR/target/release/$EXEC" "$APPDIR/usr/bin/dev.barafu.black-curtain"
+cp "$SCRIPT_DIR/target/release/$EXEC" "$APPDIR/usr/bin/dev.barafu_albino.black-curtain"
 
 # Copy icons
 mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
@@ -27,25 +27,25 @@ cp "$SCRIPT_DIR/data/icon48.png" "$APPDIR/usr/share/icons/hicolor/48x48/apps/bar
 
 # Generate .desktop file from template
 mkdir -p "$APPDIR/usr/share/applications"
-sed -e "s/{VERSION}/$VERSION/g" -e "s/{EXEC}/dev.barafu.black-curtain/g" \
+sed -e "s/{VERSION}/$VERSION/g" -e "s/{EXEC}/dev.barafu_albino.black-curtain/g" \
     "$SCRIPT_DIR/data/barafu-black-curtain.desktop.template" \
-    > "$APPDIR/usr/share/applications/dev.barafu.black-curtain.desktop"
+    > "$APPDIR/usr/share/applications/dev.barafu_albino.black-curtain.desktop"
 
 # Symlink icon to AppDir root
 ln -s "usr/share/icons/hicolor/256x256/apps/barafu-black-curtain.png" "$APPDIR/.DirIcon"
 ln -s "usr/share/icons/hicolor/256x256/apps/barafu-black-curtain.png" "$APPDIR/barafu-black-curtain.png"
 
 # Symlink .desktop to AppDir root
-ln -s "usr/share/applications/dev.barafu.black-curtain.desktop" "$APPDIR/dev.barafu.black-curtain.desktop"
+ln -s "usr/share/applications/dev.barafu_albino.black-curtain.desktop" "$APPDIR/dev.barafu_albino.black-curtain.desktop"
 
 # Copy AppStream metainfo
 mkdir -p "$APPDIR/usr/share/metainfo"
-cp "$SCRIPT_DIR/data/barafu-black-curtain.appdata.xml" "$APPDIR/usr/share/metainfo/dev.barafu.black-curtain.appdata.xml"
+cp "$SCRIPT_DIR/data/barafu-black-curtain.appdata.xml" "$APPDIR/usr/share/metainfo/dev.barafu_albino.black-curtain.appdata.xml"
 
 # Create AppRun
 cat > "$APPDIR/AppRun" << 'EOF'
 #!/bin/bash
-exec $APPDIR/usr/bin/dev.barafu.black-curtain $@
+exec $APPDIR/usr/bin/dev.barafu_albino.black-curtain $@
 EOF
 chmod +x "$APPDIR/AppRun"
 
