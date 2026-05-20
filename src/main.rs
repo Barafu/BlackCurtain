@@ -97,12 +97,18 @@ impl BlackCurtain {
                     });
 
                 // --- Color input row ---
-                self.hex_valid = parse_hex_color(&self.hex_input).is_ok();
                 ui.separator();
                 ui.horizontal(|ui| {
                     ui.label("Color:");
-                    ui.add(egui::TextEdit::singleline(&mut self.hex_input).char_limit(7));
-                    if ui.add_enabled(self.hex_valid, egui::Button::new("Apply")).clicked() {
+                    ui.add(egui::TextEdit::singleline(&mut self.hex_input).char_limit(7).desired_width(80.0));
+                    let valid = parse_hex_color(&self.hex_input).is_ok();
+                    self.hex_valid = valid;
+                    if ui.input(|i| i.key_pressed(egui::Key::Enter)) && valid {
+                        if let Ok(c) = parse_hex_color(&self.hex_input) {
+                            self.color = c;
+                        }
+                    }
+                    if ui.add_enabled(valid, egui::Button::new("Apply")).clicked() {
                         if let Ok(c) = parse_hex_color(&self.hex_input) {
                             self.color = c;
                         }
@@ -180,7 +186,7 @@ impl eframe::App for BlackCurtain {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
             }
             if response.clicked_by(egui::PointerButton::Secondary)
-                || ui.input(|i| i.key_pressed(egui::Key::Enter))
+                || (ui.input(|i| i.key_pressed(egui::Key::Enter)) && !self.show_help)
             {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             }
