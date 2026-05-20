@@ -10,6 +10,7 @@ description = "A GUI app to dim a specific monitor"
 [dependencies]
 eframe = { version = "0.34", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
 anyhow = "1.0"
+directories = "6.0.0"
 
 [profile.release]
 strip = true #Remove extra symbols

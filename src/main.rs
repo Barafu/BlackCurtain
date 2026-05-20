@@ -1,9 +1,10 @@
 use std::time::Duration;
 
+use directories::ProjectDirs;
 use eframe::egui::{self, Color32};
 
 fn main() -> eframe::Result {
-    let color = Color32::BLACK;
+    let color = load_color();
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -41,6 +42,34 @@ fn parse_hex_color(hex: &str) -> Result<Color32, String> {
         ((val >> 8) & 0xFF) as u8,
         (val & 0xFF) as u8,
     ))
+}
+
+/// Returns the filesystem path to the color persistence file.
+fn color_path() -> std::path::PathBuf {
+    let proj = ProjectDirs::from("dev", "Barafu Albino", "Black Curtain")
+        .expect("could not determine config directory");
+    proj.config_dir().join("color")
+}
+
+/// Reads the persisted color from disk, or returns [`Color32::BLACK`] if none exists.
+fn load_color() -> Color32 {
+    let path = color_path();
+    std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| parse_hex_color(s.trim()).ok())
+        .unwrap_or(Color32::BLACK)
+}
+
+/// Writes a hex-encoded `#rrggbb` string for the given color to the persistence file.
+fn save_color(color: Color32) {
+    let path = color_path();
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let r = color.r();
+    let g = color.g();
+    let b = color.b();
+    let _ = std::fs::write(&path, format!("#{r:02x}{g:02x}{b:02x}"));
 }
 
 /// Application state.
@@ -125,6 +154,7 @@ impl BlackCurtain {
                 ui.allocate_space(egui::vec2(0.0, 8.0));
                 ui.vertical_centered(|ui| {
                     if ui.add_sized(egui::vec2(120.0, 32.0), egui::Button::new("Close")).clicked() {
+                        save_color(self.color);
                         self.show_help = false;
                     }
                 });
