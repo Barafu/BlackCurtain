@@ -8,7 +8,7 @@ license = "MIT"
 description = "A GUI app to dim a specific monitor"
 
 [dependencies]
-eframe = { version = "0.34", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
+eframe = { version = "0.34", default-features = false, features = ["default_fonts", "glow", "wayland", "x11", "persistence"] }
 anyhow = "1.0"
 directories = "6.0.0"
 

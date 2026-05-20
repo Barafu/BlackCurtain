@@ -1,16 +1,30 @@
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use directories::ProjectDirs;
 use eframe::egui::{self, Color32};
 
+static CONFIG_DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+
+fn config_dir() -> &'static std::path::PathBuf {
+    CONFIG_DIR.get_or_init(|| {
+        ProjectDirs::from("dev", "Barafu Albino", "Black Curtain")
+            .expect("could not determine config directory")
+            .config_dir()
+            .to_path_buf()
+    })
+}
+
 fn main() -> eframe::Result {
     let color = load_color();
 
+    let window_state_path = config_dir().join("window_state.ron");
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 480.0])
             .with_title("Black Curtain")
             .with_app_id("black_curtain"),
+        persistence_path: Some(window_state_path),
         ..Default::default()
     };
 
@@ -46,9 +60,7 @@ fn parse_hex_color(hex: &str) -> Result<Color32, String> {
 
 /// Returns the filesystem path to the color persistence file.
 fn color_path() -> std::path::PathBuf {
-    let proj = ProjectDirs::from("dev", "Barafu Albino", "Black Curtain")
-        .expect("could not determine config directory");
-    proj.config_dir().join("color")
+    config_dir().join("color")
 }
 
 /// Reads the persisted color from disk, or returns [`Color32::BLACK`] if none exists.
