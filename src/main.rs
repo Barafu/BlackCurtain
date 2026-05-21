@@ -35,8 +35,15 @@ fn detect_session_type() -> SessionType {
 
 fn main() -> eframe::Result {
     let color = load_color();
-
     let window_state_path = config_dir().join("window_state.ron");
+    let window_state_backup_path = config_dir().join("window_state.ron.prefullscreen");
+
+    if window_state_backup_path.exists() {
+        let _ = std::fs::rename(&window_state_backup_path, &window_state_path);
+    }
+
+    let app = BlackCurtain::new(color, window_state_path.clone(), window_state_backup_path);
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 480.0])
@@ -49,7 +56,7 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "Black Curtain",
         options,
-        Box::new(move |_cc| Ok(Box::new(BlackCurtain::new(color)))),
+        Box::new(move |_cc| Ok(Box::new(app))),
     )
 }
 
@@ -104,16 +111,18 @@ fn save_color(color: Color32) {
 
 /// Application state.
 struct BlackCurtain {
-    fullscreen: bool,
-    always_on_top: bool,
-    show_help: bool,
-    color: Color32,
-    hex_input: String,
-    hex_valid: bool,
+    fullscreen: bool,              // true when the window takes the full screen
+    always_on_top: bool,           // true when the window stays above others (X11 only)
+    show_help: bool,               // true when the help overlay is visible
+    color: Color32,                // current background color
+    hex_input: String,             // user-typed hex colour string (e.g. "#ff8800")
+    hex_valid: bool,               // true when hex_input can be parsed
+    window_state_path: std::path::PathBuf,          // eframe .ron persistence file
+    window_state_backup_path: std::path::PathBuf,   // copy of .ron saved before entering fullscreen
 }
 
 impl BlackCurtain {
-    fn new(color: Color32) -> Self {
+    fn new(color: Color32, window_state_path: std::path::PathBuf, window_state_backup_path: std::path::PathBuf) -> Self {
         Self {
             fullscreen: false,
             always_on_top: false,
@@ -121,6 +130,8 @@ impl BlackCurtain {
             color,
             hex_input: String::new(),
             hex_valid: false,
+            window_state_path,
+            window_state_backup_path,
         }
     }
 
@@ -244,6 +255,13 @@ impl eframe::App for BlackCurtain {
                 || ui.input(|i| i.key_pressed(egui::Key::Space))
             {
                 self.fullscreen = !self.fullscreen;
+
+                if self.fullscreen {
+                    let _ = std::fs::rename(&self.window_state_path, &self.window_state_backup_path);
+                } else {
+                    let _ = std::fs::remove_file(&self.window_state_backup_path);
+                }
+
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
             }
             if response.clicked_by(egui::PointerButton::Secondary)
