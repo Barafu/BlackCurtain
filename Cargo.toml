@@ -1,6 +1,6 @@
 [package]
 name = "black_curtain"
-version = "1.1.0"
+version = "1.1.1"
 edition = "2024"
 repository = "https://github.com/Barafu/black-curtain"
 publish = false
@@ -13,10 +13,10 @@ anyhow = "1.0"
 directories = "6.0.0"
 
 [profile.release]
-strip = true #Remove extra symbols
-opt-level = "s" #Optimize for size
-lto = true #Enable linker optimizations
-codegen-units=1 #Maximise optimizations
+strip = true    # Remove extra symbols
+opt-level = "s" # Optimize for size
+lto = true      # Enable linker optimizations
+codegen-units=1 # Maximise optimizations
 
 [profile.dev]
 panic = "unwind"  # This ensures backtraces work
