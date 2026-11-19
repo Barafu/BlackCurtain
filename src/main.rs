@@ -23,10 +23,7 @@ enum SessionType {
 }
 
 fn detect_session_type() -> SessionType {
-    match std::env::var("XDG_SESSION_TYPE")
-        .ok()
-        .as_deref()
-    {
+    match std::env::var("XDG_SESSION_TYPE").ok().as_deref() {
         Some("wayland") => SessionType::Wayland,
         Some("x11") => SessionType::X11,
         _ => SessionType::Unknown,
@@ -35,21 +32,13 @@ fn detect_session_type() -> SessionType {
 
 fn main() -> eframe::Result {
     let color = load_color();
-    let window_state_path = config_dir().join("window_state.ron");
-    let window_state_backup_path = config_dir().join("window_state.ron.prefullscreen");
-
-    if window_state_backup_path.exists() {
-        let _ = std::fs::rename(&window_state_backup_path, &window_state_path);
-    }
-
-    let app = BlackCurtain::new(color, window_state_path.clone(), window_state_backup_path);
+    let app = BlackCurtain::new(color);
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 480.0])
             .with_title("Black Curtain")
             .with_app_id("black_curtain"),
-        persistence_path: Some(window_state_path),
         ..Default::default()
     };
 
@@ -68,9 +57,12 @@ fn parse_hex_color(hex: &str) -> Result<Color32, String> {
     let hex = if hex.len() == 3 {
         format!(
             "{}{}{}{}{}{}",
-            &hex[0..1], &hex[0..1],
-            &hex[1..2], &hex[1..2],
-            &hex[2..3], &hex[2..3],
+            &hex[0..1],
+            &hex[0..1],
+            &hex[1..2],
+            &hex[1..2],
+            &hex[2..3],
+            &hex[2..3],
         )
     } else {
         hex.to_string()
@@ -111,18 +103,17 @@ fn save_color(color: Color32) {
 
 /// Application state.
 struct BlackCurtain {
-    fullscreen: bool,              // true when the window takes the full screen
-    always_on_top: bool,           // true when the window stays above others (X11 only)
-    show_help: bool,               // true when the help overlay is visible
-    color: Color32,                // current background color
-    hex_input: String,             // user-typed hex colour string (e.g. "#ff8800")
-    hex_valid: bool,               // true when hex_input can be parsed
-    window_state_path: std::path::PathBuf,          // eframe .ron persistence file
-    window_state_backup_path: std::path::PathBuf,   // copy of .ron saved before entering fullscreen
+    fullscreen: bool,          // true when the window takes the full screen
+    always_on_top: bool,       // true when the window stays above others (X11 only)
+    show_help: bool,           // true when the help overlay is visible
+    color: Color32,            // current background color
+    hex_input: String,         // user-typed hex colour string (e.g. "#ff8800")
+    hex_valid: bool,           // true when hex_input can be parsed
+    session_type: SessionType, // detected once at startup, never changes for the process lifetime
 }
 
 impl BlackCurtain {
-    fn new(color: Color32, window_state_path: std::path::PathBuf, window_state_backup_path: std::path::PathBuf) -> Self {
+    fn new(color: Color32) -> Self {
         Self {
             fullscreen: false,
             always_on_top: false,
@@ -130,8 +121,7 @@ impl BlackCurtain {
             color,
             hex_input: String::new(),
             hex_valid: false,
-            window_state_path,
-            window_state_backup_path,
+            session_type: detect_session_type(),
         }
     }
 
@@ -167,7 +157,7 @@ impl BlackCurtain {
                         ui.label("F1");
                         ui.end_row();
 
-                        if detect_session_type() != SessionType::Wayland {
+                        if self.session_type != SessionType::Wayland {
                             ui.label("Always on top");
                             ui.label("—");
                             ui.label("L");
@@ -179,7 +169,11 @@ impl BlackCurtain {
                 ui.separator();
                 ui.horizontal(|ui| {
                     ui.label("Color:");
-                    ui.add(egui::TextEdit::singleline(&mut self.hex_input).char_limit(7).desired_width(80.0));
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.hex_input)
+                            .char_limit(7)
+                            .desired_width(80.0),
+                    );
                     let valid = parse_hex_color(&self.hex_input).is_ok();
                     self.hex_valid = valid;
                     if ui.input(|i| i.key_pressed(egui::Key::Enter)) && valid {
@@ -203,7 +197,10 @@ impl BlackCurtain {
                 // --- Close button ---
                 ui.allocate_space(egui::vec2(0.0, 8.0));
                 ui.vertical_centered(|ui| {
-                    if ui.add_sized(egui::vec2(120.0, 32.0), egui::Button::new("Close")).clicked() {
+                    if ui
+                        .add_sized(egui::vec2(120.0, 32.0), egui::Button::new("Close"))
+                        .clicked()
+                    {
                         save_color(self.color);
                         self.show_help = false;
                     }
@@ -230,7 +227,6 @@ impl eframe::App for BlackCurtain {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             let response = ui.allocate_rect(ui.max_rect(), egui::Sense::click());
 
-        
             // Doesn't work because of https://github.com/emilk/egui/issues/7959
             // let left_down = ui.ctx().input(|i| i.pointer.button_down(egui::PointerButton::Primary));
             // if left_down {
@@ -251,38 +247,35 @@ impl eframe::App for BlackCurtain {
             //     self.dragging = false;
             // }
 
-            if response.double_clicked()
-                || ui.input(|i| i.key_pressed(egui::Key::Space))
-            {
+            if response.double_clicked() || ui.input(|i| i.key_pressed(egui::Key::Space)) {
                 self.fullscreen = !self.fullscreen;
-
-                if self.fullscreen {
-                    let _ = std::fs::rename(&self.window_state_path, &self.window_state_backup_path);
-                } else {
-                    let _ = std::fs::remove_file(&self.window_state_backup_path);
-                }
-
-                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
+                ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
             }
             if response.clicked_by(egui::PointerButton::Secondary)
                 || (ui.input(|i| i.key_pressed(egui::Key::Enter)) && !self.show_help)
             {
-                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             }
-            if detect_session_type() != SessionType::Wayland && ui.input(|i| i.key_pressed(egui::Key::L)) {
+            if self.session_type != SessionType::Wayland
+                && ui.input(|i| i.key_pressed(egui::Key::L))
+            {
                 self.always_on_top = !self.always_on_top;
                 let level = if self.always_on_top {
                     egui::viewport::WindowLevel::AlwaysOnTop
                 } else {
                     egui::viewport::WindowLevel::Normal
                 };
-                ui.ctx().send_viewport_cmd(egui::ViewportCommand::WindowLevel(level));
+                ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::WindowLevel(level));
                 let title = if self.always_on_top {
                     "Black Curtain (Always on Top)"
                 } else {
                     "Black Curtain"
                 };
-                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Title(title.into()));
+                ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::Title(title.into()));
             }
             if response.clicked_by(egui::PointerButton::Middle)
                 || ui.input(|i| i.key_pressed(egui::Key::F1))
