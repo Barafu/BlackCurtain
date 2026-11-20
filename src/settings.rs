@@ -1,7 +1,19 @@
 use anyhow::Result;
+use const_format::concatcp;
 use serde::{Deserialize, Serialize};
 
 use crate::config_dir;
+
+/// Default window width in logical pixels.
+pub const DEFAULT_WIDTH: u32 = 800;
+/// Default window height in logical pixels.
+pub const DEFAULT_HEIGHT: u32 = 600;
+/// Label of the button that restores the default window size.
+pub const DEFAULT_SIZE_LABEL: &str = concatcp!(DEFAULT_WIDTH, "x", DEFAULT_HEIGHT);
+/// Smallest window size accepted in the size fields, in logical pixels.
+pub const MIN_WINDOW_SIZE: u32 = 100;
+/// Largest window size accepted in the size fields, in logical pixels.
+pub const MAX_WINDOW_SIZE: u32 = 10_000;
 
 /// Application settings persisted to disk as TOML.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -24,8 +36,8 @@ fn default_first_run() -> bool {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            width: 800,
-            height: 600,
+            width: DEFAULT_WIDTH,
+            height: DEFAULT_HEIGHT,
             color: "#000000".to_owned(),
             first_run: true,
         }

@@ -13,6 +13,7 @@ directories = "6.0.0"
 toml = "1.2.1"
 serde = { version = "1.0.229", features = ["derive"] }
 anyhow = "1.0.104"
+const_format = "0.2.37"
 
 [profile.release]
 strip = true    # Remove extra symbols

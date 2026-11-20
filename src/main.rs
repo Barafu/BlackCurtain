@@ -6,6 +6,13 @@ use eframe::egui::{self, Color32};
 
 mod settings;
 
+use settings::{
+    DEFAULT_HEIGHT, DEFAULT_SIZE_LABEL, DEFAULT_WIDTH, MAX_WINDOW_SIZE, MIN_WINDOW_SIZE,
+};
+
+/// Application version, taken from Cargo.toml at compile time.
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 static CONFIG_DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
 
 fn config_dir() -> &'static std::path::PathBuf {
@@ -75,10 +82,12 @@ fn main() -> eframe::Result {
 
 /// Application state.
 struct BlackCurtain {
-    fullscreen: bool,             // true when the window takes the full screen
-    always_on_top: bool,          // true when the window stays above others (X11 only)
-    show_help: bool,              // true when the help overlay is visible
-    hex_input: String,            // user-typed hex colour string (e.g. "#ff8800")
+    fullscreen: bool,                 // true when the window takes the full screen
+    always_on_top: bool,              // true when the window stays above others (X11 only)
+    show_help: bool,                  // true when the help overlay is visible
+    hex_input: String,                // user-typed hex colour string (e.g. "#ff8800")
+    hex_input_color: Option<Color32>, // parsed `hex_input`, kept in sync with it (None = invalid)
+    color: Color32, // parsed `settings.color`, cached to avoid reparsing every frame
     session_type: SessionType, // detected once at startup, never changes for the process lifetime
     settings: settings::Settings, // persisted window settings
 }
@@ -97,6 +106,8 @@ impl BlackCurtain {
             always_on_top: false,
             show_help,
             hex_input: String::new(),
+            hex_input_color: None,
+            color: Color32::from_hex(&settings.color).unwrap_or(Color32::BLACK),
             session_type: detect_session_type(),
             settings,
         }
@@ -104,7 +115,7 @@ impl BlackCurtain {
 
     // Help window: a list of controls, color picker, and close button
     fn show_help_window(&mut self, ctx: &egui::Context) {
-        egui::Window::new("Help")
+        egui::Window::new("Help & Settings")
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .collapsible(false)
             .resizable(false)
@@ -147,30 +158,43 @@ impl BlackCurtain {
                 ui.horizontal(|ui| ui.label("Curtain color:"));
                 ui.horizontal(|ui| {
                     ui.label("Input here:");
-                    ui.add(
+                    let response = ui.add(
                         egui::TextEdit::singleline(&mut self.hex_input)
                             .char_limit(7)
                             .desired_width(80.0),
                     );
-                    let valid = Color32::from_hex(&self.hex_input).is_ok();
+                    if response.changed() {
+                        self.hex_input_color = Color32::from_hex(&self.hex_input).ok();
+                    }
+                    // `valid`: the input parses to a colour; `changed`: that colour is not
+                    // already the one in use. Apply makes sense only when both hold.
+                    let valid = self.hex_input_color.is_some();
+                    let changed = self.hex_input_color != Some(self.color);
                     if ui.input(|i| i.key_pressed(egui::Key::Enter)) && valid {
-                        if let Ok(c) = Color32::from_hex(&self.hex_input) {
+                        if let Some(c) = self.hex_input_color {
+                            self.color = c;
                             self.settings.color = c.to_hex();
                         }
                     }
-                    if ui.add_enabled(valid, egui::Button::new("Apply")).clicked() {
-                        if let Ok(c) = Color32::from_hex(&self.hex_input) {
+                    if ui
+                        .add_enabled(valid && changed, egui::Button::new("Apply"))
+                        .clicked()
+                    {
+                        if let Some(c) = self.hex_input_color {
+                            self.color = c;
                             self.settings.color = c.to_hex();
                         }
                     }
                 });
                 ui.horizontal(|ui| {
                     ui.label("or pick here:");
-                    let current = Color32::from_hex(&self.settings.color).unwrap_or(Color32::BLACK);
-                    let mut srgb = [current.r(), current.g(), current.b()];
+                    let mut srgb = [self.color.r(), self.color.g(), self.color.b()];
                     if ui.color_edit_button_srgb(&mut srgb).changed() {
-                        self.settings.color = Color32::from_rgb(srgb[0], srgb[1], srgb[2]).to_hex();
-                        self.hex_input = Color32::from_rgb(srgb[0], srgb[1], srgb[2]).to_hex();
+                        let c = Color32::from_rgb(srgb[0], srgb[1], srgb[2]);
+                        self.color = c;
+                        self.settings.color = c.to_hex();
+                        self.hex_input = c.to_hex()[..7].to_owned();
+                        self.hex_input_color = Some(c);
                     }
                 });
                 ui.separator();
@@ -181,13 +205,13 @@ impl BlackCurtain {
                     ui.label("Default window size:");
                     ui.add(
                         egui::DragValue::new(&mut self.settings.width)
-                            .range(100..=10_000)
+                            .range(MIN_WINDOW_SIZE..=MAX_WINDOW_SIZE)
                             .suffix(" px"),
                     );
                     ui.label(" X ");
                     ui.add(
                         egui::DragValue::new(&mut self.settings.height)
-                            .range(100..=10_000)
+                            .range(MIN_WINDOW_SIZE..=MAX_WINDOW_SIZE)
                             .suffix(" px"),
                     );
                     ui.add_space(20.0);
@@ -195,6 +219,10 @@ impl BlackCurtain {
                         let rect = ui.ctx().content_rect();
                         self.settings.width = rect.width().round() as u32;
                         self.settings.height = rect.height().round() as u32;
+                    }
+                    if ui.button(DEFAULT_SIZE_LABEL).clicked() {
+                        self.settings.width = DEFAULT_WIDTH;
+                        self.settings.height = DEFAULT_HEIGHT;
                     }
                 });
 
@@ -211,6 +239,8 @@ impl BlackCurtain {
                             self.show_help = false;
                         }
                     }
+                    ui.add_space(4.0);
+                    ui.small(format!(" vers. {}", VERSION));
                 });
             });
     }
@@ -218,7 +248,7 @@ impl BlackCurtain {
 
 impl eframe::App for BlackCurtain {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        let color = Color32::from_hex(&self.settings.color).unwrap_or(Color32::BLACK);
+        let color = self.color;
         ui.ctx().global_style_mut(move |style| {
             style.visuals.panel_fill = color;
         });
@@ -287,12 +317,9 @@ impl eframe::App for BlackCurtain {
             if response.clicked_by(egui::PointerButton::Middle)
                 || ui.input(|i| i.key_pressed(egui::Key::F1))
             {
-                self.show_help = !self.show_help;
-                if self.show_help {
-                    self.hex_input = Color32::from_hex(&self.settings.color)
-                        .unwrap_or(Color32::BLACK)
-                        .to_hex();
-                }
+                self.show_help = true;
+                self.hex_input = self.color.to_hex()[..7].to_owned();
+                self.hex_input_color = Some(self.color);
             }
         });
 
