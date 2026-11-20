@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use directories::ProjectDirs;
-use eframe::egui::{self, Color32, PointerState};
+use eframe::egui::{self, Color32};
 
 mod settings;
 
@@ -91,7 +91,6 @@ struct BlackCurtain {
     color: Color32,    // parsed `settings.color`, cached to avoid reparsing every frame
     session_type: SessionType, // detected once at startup, never changes for the process lifetime
     settings: settings::Settings, // persisted settings
-    dragging: bool,
 }
 
 impl BlackCurtain {
@@ -112,7 +111,6 @@ impl BlackCurtain {
             color: Color32::from_hex(&settings.color).unwrap_or(Color32::BLACK),
             session_type: detect_session_type(),
             settings,
-            dragging: false,
         }
     }
 
