@@ -168,6 +168,29 @@ impl BlackCurtain {
                 });
                 ui.separator();
 
+                // --- Default window size ---
+                ui.allocate_space(egui::vec2(0.0, 8.0));
+                ui.horizontal(|ui| {
+                    ui.label("Default window size:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.settings.width)
+                            .range(100..=10_000)
+                            .suffix(" px"),
+                    );
+                    ui.label(" X ");
+                    ui.add(
+                        egui::DragValue::new(&mut self.settings.height)
+                            .range(100..=10_000)
+                            .suffix(" px"),
+                    );
+                    ui.add_space(20.0);
+                    if ui.button("Use current").clicked() {
+                        let rect = ui.ctx().content_rect();
+                        self.settings.width = rect.width().round() as u32;
+                        self.settings.height = rect.height().round() as u32;
+                    }
+                });
+
                 // --- Close button ---
                 ui.allocate_space(egui::vec2(0.0, 8.0));
                 ui.vertical_centered(|ui| {
