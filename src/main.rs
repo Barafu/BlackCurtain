@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use directories::ProjectDirs;
-use eframe::egui::{self, Color32};
+use eframe::egui::{self, Color32, PointerState};
 
 mod settings;
 
@@ -89,7 +89,8 @@ struct BlackCurtain {
     hex_input_color: Option<Color32>, // parsed `hex_input`, kept in sync with it (None = invalid)
     color: Color32, // parsed `settings.color`, cached to avoid reparsing every frame
     session_type: SessionType, // detected once at startup, never changes for the process lifetime
-    settings: settings::Settings, // persisted window settings
+    settings: settings::Settings, // persisted settings
+    dragging: bool,
 }
 
 impl BlackCurtain {
@@ -110,6 +111,7 @@ impl BlackCurtain {
             color: Color32::from_hex(&settings.color).unwrap_or(Color32::BLACK),
             session_type: detect_session_type(),
             settings,
+            dragging: false,
         }
     }
 
@@ -264,37 +266,37 @@ impl eframe::App for BlackCurtain {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             let response = ui.allocate_rect(ui.max_rect(), egui::Sense::click());
 
-            // Doesn't work because of https://github.com/emilk/egui/issues/7959
-            // let left_down = ui.ctx().input(|i| i.pointer.button_down(egui::PointerButton::Primary));
-            // if left_down {
-            //     if !self.dragging {
-            //         self.dragging = true;
-            //         ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
-            //         println!("Drag start");
-            //     }
-            //     else {
-            //         self.dragging = false;
-            //     }
-            // }
-            // if left_down {
-            //     println!("Left down");
-            // }
-            // if any_up {
-            //     println!("Drag stop");
-            //     self.dragging = false;
-            // }
+            // Provides drag by any part of the window.
+            // Shenanigans to avoid https://github.com/emilk/egui/issues/7959
+            let left_down = ui
+                .ctx()
+                .input(|i| i.pointer.button_down(egui::PointerButton::Primary));
+            if left_down && !self.show_help {
+                if self.dragging == false {
+                    self.dragging = true;
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+                    ui.input_mut(|i| i.pointer = PointerState::default());
+                }
+            } else {
+                self.dragging = false;
+            }
 
+            // Double click
             if response.double_clicked() || ui.input(|i| i.key_pressed(egui::Key::Space)) {
                 self.fullscreen = !self.fullscreen;
                 ui.ctx()
                     .send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
             }
+
+            // Right click
             if response.clicked_by(egui::PointerButton::Secondary)
                 || (ui.input(|i| i.key_pressed(egui::Key::Enter)) && !self.show_help)
             {
                 ui.ctx()
                     .send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             }
+
+            // L key
             if self.session_type != SessionType::Wayland
                 && ui.input(|i| i.key_pressed(egui::Key::L))
             {
@@ -314,6 +316,8 @@ impl eframe::App for BlackCurtain {
                 ui.ctx()
                     .send_viewport_cmd(egui::ViewportCommand::Title(title.into()));
             }
+
+            // Middle click
             if response.clicked_by(egui::PointerButton::Middle)
                 || ui.input(|i| i.key_pressed(egui::Key::F1))
             {
