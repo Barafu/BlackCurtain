@@ -12,6 +12,13 @@ pub struct Settings {
     pub height: u32,
     /// Background color as a `#rrggbb` hex string.
     pub color: String,
+    /// True until the Help window has been shown once at startup.
+    #[serde(default = "default_first_run")]
+    pub first_run: bool,
+}
+
+fn default_first_run() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -20,6 +27,7 @@ impl Default for Settings {
             width: 800,
             height: 600,
             color: "#000000".to_owned(),
+            first_run: true,
         }
     }
 }

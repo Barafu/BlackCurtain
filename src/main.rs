@@ -84,11 +84,18 @@ struct BlackCurtain {
 }
 
 impl BlackCurtain {
-    fn new(settings: settings::Settings) -> Self {
+    fn new(mut settings: settings::Settings) -> Self {
+        let show_help = settings.first_run;
+        if show_help {
+            settings.first_run = false;
+            if let Err(err) = settings.save() {
+                notify_error(&format!("Failed to save settings: {err}"));
+            }
+        }
         Self {
             fullscreen: false,
             always_on_top: false,
-            show_help: false,
+            show_help,
             hex_input: String::new(),
             session_type: detect_session_type(),
             settings,
