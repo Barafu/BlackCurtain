@@ -85,9 +85,9 @@ struct BlackCurtain {
     fullscreen: bool,                 // true when the window takes the full screen
     always_on_top: bool,              // true when the window stays above others (X11 only)
     show_help: bool,                  // true when the help overlay is visible
-    hex_input: String,                // user-typed hex colour string (e.g. "#ff8800")
+    hex_input: String, // user-typed hex digits, never showing the leading '#' (e.g. "ff8800")
     hex_input_color: Option<Color32>, // parsed `hex_input`, kept in sync with it (None = invalid)
-    color: Color32, // parsed `settings.color`, cached to avoid reparsing every frame
+    color: Color32,    // parsed `settings.color`, cached to avoid reparsing every frame
     session_type: SessionType, // detected once at startup, never changes for the process lifetime
     settings: settings::Settings, // persisted settings
     dragging: bool,
@@ -162,11 +162,19 @@ impl BlackCurtain {
                     ui.label("Input here:");
                     let response = ui.add(
                         egui::TextEdit::singleline(&mut self.hex_input)
-                            .char_limit(7)
-                            .desired_width(80.0),
+                            .desired_width(80.0)
+                            .prefix("#"),
                     );
                     if response.changed() {
-                        self.hex_input_color = Color32::from_hex(&self.hex_input).ok();
+                        // Only hex digits are allowed: the leading '#' (which
+                        // `from_hex` requires) is stripped for display and put back
+                        // for parsing, and any other stray character is dropped.
+                        // Trimming happens after stripping, so pasting "#rrggbb"
+                        // keeps all six digits instead of losing one to the limit.
+                        self.hex_input.retain(|c| c.is_ascii_hexdigit());
+                        self.hex_input.truncate(6);
+                        self.hex_input_color =
+                            Color32::from_hex(&format!("#{}", self.hex_input)).ok();
                     }
                     // `valid`: the input parses to a colour; `changed`: that colour is not
                     // already the one in use. Apply makes sense only when both hold.
@@ -195,7 +203,7 @@ impl BlackCurtain {
                         let c = Color32::from_rgb(srgb[0], srgb[1], srgb[2]);
                         self.color = c;
                         self.settings.color = c.to_hex();
-                        self.hex_input = c.to_hex()[..7].to_owned();
+                        self.hex_input = c.to_hex()[1..7].to_owned();
                         self.hex_input_color = Some(c);
                     }
                 });
@@ -322,7 +330,7 @@ impl eframe::App for BlackCurtain {
                 || ui.input(|i| i.key_pressed(egui::Key::F1))
             {
                 self.show_help = true;
-                self.hex_input = self.color.to_hex()[..7].to_owned();
+                self.hex_input = self.color.to_hex()[1..7].to_owned();
                 self.hex_input_color = Some(self.color);
             }
         });
