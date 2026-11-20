@@ -7,7 +7,8 @@ use eframe::egui::{self, Color32, PointerState};
 mod settings;
 
 use settings::{
-    DEFAULT_HEIGHT, DEFAULT_SIZE_LABEL, DEFAULT_WIDTH, MAX_WINDOW_SIZE, MIN_WINDOW_SIZE,
+    DEFAULT_HEIGHT, DEFAULT_SIZE_LABEL, DEFAULT_WIDTH, MAX_WINDOW_SIZE, MIN_WINDOW_HEIGHT,
+    MIN_WINDOW_WIDTH,
 };
 
 /// Application version, taken from Cargo.toml at compile time.
@@ -215,13 +216,13 @@ impl BlackCurtain {
                     ui.label("Default window size:");
                     ui.add(
                         egui::DragValue::new(&mut self.settings.width)
-                            .range(MIN_WINDOW_SIZE..=MAX_WINDOW_SIZE)
+                            .range(MIN_WINDOW_WIDTH..=MAX_WINDOW_SIZE)
                             .suffix(" px"),
                     );
                     ui.label(" X ");
                     ui.add(
                         egui::DragValue::new(&mut self.settings.height)
-                            .range(MIN_WINDOW_SIZE..=MAX_WINDOW_SIZE)
+                            .range(MIN_WINDOW_HEIGHT..=MAX_WINDOW_SIZE)
                             .suffix(" px"),
                     );
                     ui.add_space(20.0);
@@ -273,21 +274,6 @@ impl eframe::App for BlackCurtain {
 
         egui::CentralPanel::default().show_inside(ui, |ui| {
             let response = ui.allocate_rect(ui.max_rect(), egui::Sense::click());
-
-            // Provides drag by any part of the window.
-            // Shenanigans to avoid https://github.com/emilk/egui/issues/7959
-            let left_down = ui
-                .ctx()
-                .input(|i| i.pointer.button_down(egui::PointerButton::Primary));
-            if left_down && !self.show_help {
-                if self.dragging == false {
-                    self.dragging = true;
-                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
-                    ui.input_mut(|i| i.pointer = PointerState::default());
-                }
-            } else {
-                self.dragging = false;
-            }
 
             // Double click
             if response.double_clicked() || ui.input(|i| i.key_pressed(egui::Key::Space)) {

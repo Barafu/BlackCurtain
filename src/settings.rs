@@ -10,8 +10,10 @@ pub const DEFAULT_WIDTH: u32 = 800;
 pub const DEFAULT_HEIGHT: u32 = 600;
 /// Label of the button that restores the default window size.
 pub const DEFAULT_SIZE_LABEL: &str = concatcp!(DEFAULT_WIDTH, "x", DEFAULT_HEIGHT);
-/// Smallest window size accepted in the size fields, in logical pixels.
-pub const MIN_WINDOW_SIZE: u32 = 100;
+/// Smallest window width accepted in the size fields, in logical pixels.
+pub const MIN_WINDOW_WIDTH: u32 = 640;
+/// Smallest window height accepted in the size fields, in logical pixels.
+pub const MIN_WINDOW_HEIGHT: u32 = 480;
 /// Largest window size accepted in the size fields, in logical pixels.
 pub const MAX_WINDOW_SIZE: u32 = 10_000;
 
